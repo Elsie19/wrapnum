@@ -1,0 +1,10 @@
+[package]
+name = "wrapnum"
+version = "0.1.0"
+edition = "2021"
+description = "Ever wanted to make arbitrary number wraparounds? Now you can."
+license = "GPLv3"
+repository = "https://github.com/Elsie19/wrapnum"
+
+[dependencies]
+num = "0.4.3"
