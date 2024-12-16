@@ -17,6 +17,18 @@ use std::{
 
 use num::{zero, ToPrimitive};
 
+macro_rules! impl_from_wrapnum {
+    ($($t:ty),*) => {
+        $(
+            impl From<WrapNum<$t>> for $t {
+                fn from(wrap_num: WrapNum<$t>) -> Self {
+                    wrap_num.value
+                }
+            }
+        )*
+    };
+}
+
 #[derive(Clone, Copy, Debug)]
 /// Number with arbitrary wrapping.
 pub struct WrapNum<T> {
@@ -211,6 +223,10 @@ where
     }
 }
 
+//  The reason why we can't just make one generic implementation is because I believe we need a
+//  real type on the righthandside of the "for".
+impl_from_wrapnum!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
+
 impl<T> Default for WrapNum<T>
 where
     T: num::Bounded + num::Zero,
@@ -355,5 +371,12 @@ mod tests {
         println!("{}", here);
         let there = wrap!(50);
         assert_eq!(here, there + 5);
+    }
+
+    #[test]
+    fn into_integer() {
+        let here = wrap!(420, 0, 69420);
+        let hmm: WrapNum<u32> = 420.into();
+        let as_u32 = u32::from(here);
     }
 }
