@@ -1,13 +1,16 @@
 //! Ever wanted to just make a number and have it automatically wrap around an
 //! arbitrary minimum/maximum without ever thinking about it after creating the number?
 //! Here you go.
+//!
+//! The goal of this is to act as much like any other integer type available, so that you can just
+//! think of this as a number and leave all the wrapping to us!
 
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Rem, Sub, SubAssign},
+    ops::{Add, AddAssign, Index, Rem, Sub, SubAssign},
 };
 
-use num::zero;
+use num::{zero, ToPrimitive};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 /// Number with arbitrary wrapping.
@@ -26,6 +29,36 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+impl<T, U> Index<WrapNum<U>> for [T]
+where
+    U: ToPrimitive + Copy,
+{
+    type Output = T;
+
+    fn index(&self, index: WrapNum<U>) -> &Self::Output {
+        let idx = index
+            .value
+            .to_usize()
+            .expect("Failed to convert index to usize");
+        &self[idx]
+    }
+}
+
+impl<T, U> Index<WrapNum<U>> for Vec<T>
+where
+    U: ToPrimitive + Copy,
+{
+    type Output = T;
+
+    fn index(&self, index: WrapNum<U>) -> &Self::Output {
+        let idx = index
+            .value
+            .to_usize()
+            .expect("Failed to convert index to usize");
+        &self[idx]
     }
 }
 
@@ -245,5 +278,12 @@ mod tests {
     fn can_convert() {
         let mut mins = wrap!(=5);
         mins += 5 as u16;
+    }
+
+    #[test]
+    fn has_indexing() {
+        let here = wrap!(5);
+        let oh = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+        assert_eq!(oh[here], 10);
     }
 }
