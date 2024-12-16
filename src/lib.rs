@@ -4,6 +4,11 @@
 //!
 //! The goal of this is to act as much like any other integer type available, so that you can just
 //! think of this as a number and leave all the wrapping to us!
+//!
+//! # Notes
+//! This library uses logic that does not change between debug and release modes, unlike some
+//! methods like [`std::intrinsics::wrapping_add()`]. As such, this library is not meant to be
+//! performance critical; it is simply meant to be a "one-and-done forget about it" variable.
 
 use std::{
     fmt::Display,
@@ -12,7 +17,7 @@ use std::{
 
 use num::{zero, ToPrimitive};
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 /// Number with arbitrary wrapping.
 pub struct WrapNum<T> {
     /// Current value.
@@ -29,6 +34,14 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+/// We are overriding to make it appear more like other integers. If you *really* need to compare
+/// all the fields, use [`WrapNum::total_eq()`].
+impl<T: PartialEq> PartialEq for WrapNum<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
     }
 }
 
@@ -207,6 +220,12 @@ where
     }
 }
 
+impl<T: PartialEq> WrapNum<T> {
+    pub fn total_eq(self, other: &Self) -> bool {
+        self.value == other.value && self.min == other.min && self.max == other.max
+    }
+}
+
 #[macro_export]
 /// Create [`WrapNum`] with value, minimum and maximum.
 ///
@@ -282,5 +301,14 @@ mod tests {
         let here = wrap!(5);
         let oh = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
         assert_eq!(oh[here], 10);
+    }
+
+    #[test]
+    fn are_equals() {
+        let mut here = wrap!(5);
+        here += 1;
+        let mut there = wrap!(50);
+        there += 1;
+        assert_eq!(here, there);
     }
 }

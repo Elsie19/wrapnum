@@ -1,8 +1,8 @@
 [package]
 name = "wrapnum"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
-description = "Ever wanted to make arbitrary number wraparounds? Now you can."
+description = "Ever wanted to make easy arbitrary number wraparounds? Now you can."
 license = "GPL-3.0-only"
 repository = "https://github.com/Elsie19/wrapnum"
 
