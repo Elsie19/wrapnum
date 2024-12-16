@@ -7,7 +7,7 @@
 
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Index, Rem, Sub, SubAssign},
+    ops::{Add, AddAssign, Index, IndexMut, Rem, Sub, SubAssign},
 };
 
 use num::{zero, ToPrimitive};
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<T, U> Index<WrapNum<U>> for [T]
+impl<T, U> Index<WrapNum<U>> for Vec<T>
 where
     U: ToPrimitive + Copy,
 {
@@ -47,18 +47,15 @@ where
     }
 }
 
-impl<T, U> Index<WrapNum<U>> for Vec<T>
+impl<T, U> IndexMut<WrapNum<U>> for Vec<T>
 where
     U: ToPrimitive + Copy,
 {
-    type Output = T;
-
-    fn index(&self, index: WrapNum<U>) -> &Self::Output {
-        let idx = index
+    fn index_mut(&mut self, index: WrapNum<U>) -> &mut Self::Output {
+        &mut self[index
             .value
             .to_usize()
-            .expect("Failed to convert index to usize");
-        &self[idx]
+            .expect("Failed to convert index to usize")]
     }
 }
 
