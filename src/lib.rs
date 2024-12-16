@@ -37,11 +37,21 @@ where
     }
 }
 
-/// We are overriding to make it appear more like other integers. If you *really* need to compare
-/// all the fields, use [`WrapNum::total_eq()`].
-impl<T: PartialEq> PartialEq for WrapNum<T> {
+impl<T> PartialEq for WrapNum<T>
+where
+    T: Copy + PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
+    }
+}
+
+impl<T> PartialEq<T> for WrapNum<T>
+where
+    T: Copy + PartialEq,
+{
+    fn eq(&self, other: &T) -> bool {
+        self.value == *other
     }
 }
 
@@ -72,6 +82,16 @@ where
     }
 }
 
+impl<T> WrapNum<T>
+where
+    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+{
+    fn wrapped_result(value: T, min: T, max: T) -> T {
+        let range = max - min;
+        (value - min) % range + min
+    }
+}
+
 impl<T> Add for WrapNum<T>
 where
     T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
@@ -79,8 +99,24 @@ where
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let range = self.max - self.min;
-        let wrapped_value = (self.value + rhs.value - self.min) % range + self.min;
+        let wrapped_value = Self::wrapped_result(self.value + rhs.value, self.min, self.max);
+
+        Self {
+            value: wrapped_value,
+            min: self.min,
+            max: self.max,
+        }
+    }
+}
+
+impl<T> Add<T> for WrapNum<T>
+where
+    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn add(self, rhs: T) -> Self::Output {
+        let wrapped_value = Self::wrapped_result(self.value + rhs, self.min, self.max);
 
         Self {
             value: wrapped_value,
@@ -97,15 +133,36 @@ where
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let range = self.max - self.min;
-
         let result = if self.value < rhs.value {
             self.max - self.min + (self.value - rhs.value)
         } else {
             self.value - rhs.value
         };
 
-        let wrapped_value = (result - self.min) % range + self.min;
+        let wrapped_value = Self::wrapped_result(result, self.min, self.max);
+
+        Self {
+            value: wrapped_value,
+            min: self.min,
+            max: self.max,
+        }
+    }
+}
+
+impl<T> Sub<T> for WrapNum<T>
+where
+    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + num::Bounded + num::One + Copy,
+{
+    type Output = Self;
+
+    fn sub(self, rhs: T) -> Self::Output {
+        let result = if self.value < rhs {
+            self.max - self.min + (self.value - rhs)
+        } else {
+            self.value - rhs
+        };
+
+        let wrapped_value = Self::wrapped_result(result, self.min, self.max);
 
         Self {
             value: wrapped_value,
@@ -117,39 +174,27 @@ where
 
 impl<T> AddAssign<T> for WrapNum<T>
 where
-    T: Add<Output = T> + Sub<Output = T> + Rem<Output = T> + Copy,
+    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
 {
     fn add_assign(&mut self, rhs: T) {
-        let range = self.max - self.min;
-
         let result = self.value + rhs;
 
-        *self = Self {
-            value: (result - self.min) % range + self.min,
-            min: self.min,
-            max: self.max,
-        }
+        self.value = Self::wrapped_result(result, self.min, self.max);
     }
 }
 
 impl<T> SubAssign<T> for WrapNum<T>
 where
-    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + PartialOrd + Copy,
+    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + num::Bounded + num::One + Copy,
 {
     fn sub_assign(&mut self, rhs: T) {
-        let range = self.max - self.min;
-
         let result = if self.value < rhs {
             self.max - self.min + (self.value - rhs)
         } else {
             self.value - rhs
         };
 
-        *self = Self {
-            value: (result - self.min) % range + self.min,
-            min: self.min,
-            max: self.max,
-        };
+        self.value = Self::wrapped_result(result, self.min, self.max);
     }
 }
 
@@ -305,10 +350,10 @@ mod tests {
 
     #[test]
     fn are_equals() {
-        let mut here = wrap!(5);
-        here += 1;
-        let mut there = wrap!(50);
-        there += 1;
-        assert_eq!(here, there);
+        let mut here = wrap!(6);
+        here += 5;
+        println!("{}", here);
+        let there = wrap!(50);
+        assert_eq!(here, there + 5);
     }
 }
