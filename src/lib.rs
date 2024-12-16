@@ -15,7 +15,7 @@ use std::{
     ops::{Add, AddAssign, Index, IndexMut, Rem, Sub, SubAssign},
 };
 
-use num::{zero, ToPrimitive};
+use num_traits::{zero, Bounded, One, ToPrimitive, Zero};
 
 macro_rules! impl_from_wrapnum {
     ($($t:ty),*) => {
@@ -96,7 +96,7 @@ where
 
 impl<T> WrapNum<T>
 where
-    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+    T: Add<Output = T> + Sub<Output = T> + Ord + Bounded + Rem<Output = T> + Copy,
 {
     fn wrapped_result(value: T, min: T, max: T) -> T {
         let range = max - min;
@@ -106,7 +106,7 @@ where
 
 impl<T> Add for WrapNum<T>
 where
-    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+    T: Add<Output = T> + Sub<Output = T> + Ord + Bounded + Rem<Output = T> + Copy,
 {
     type Output = Self;
 
@@ -123,7 +123,7 @@ where
 
 impl<T> Add<T> for WrapNum<T>
 where
-    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+    T: Add<Output = T> + Sub<Output = T> + Ord + Bounded + Rem<Output = T> + Copy,
 {
     type Output = Self;
 
@@ -140,7 +140,7 @@ where
 
 impl<T> Sub for WrapNum<T>
 where
-    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + num::Bounded + num::One + Copy,
+    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + Bounded + One + Copy,
 {
     type Output = Self;
 
@@ -163,7 +163,7 @@ where
 
 impl<T> Sub<T> for WrapNum<T>
 where
-    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + num::Bounded + num::One + Copy,
+    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + Bounded + One + Copy,
 {
     type Output = Self;
 
@@ -186,7 +186,7 @@ where
 
 impl<T> AddAssign<T> for WrapNum<T>
 where
-    T: Add<Output = T> + Sub<Output = T> + Ord + num::Bounded + Rem<Output = T> + Copy,
+    T: Add<Output = T> + Sub<Output = T> + Ord + Bounded + Rem<Output = T> + Copy,
 {
     fn add_assign(&mut self, rhs: T) {
         let result = self.value + rhs;
@@ -197,7 +197,7 @@ where
 
 impl<T> SubAssign<T> for WrapNum<T>
 where
-    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + num::Bounded + num::One + Copy,
+    T: Sub<Output = T> + Add<Output = T> + Rem<Output = T> + Ord + Bounded + One + Copy,
 {
     fn sub_assign(&mut self, rhs: T) {
         let result = if self.value < rhs {
@@ -212,7 +212,7 @@ where
 
 impl<T> From<T> for WrapNum<T>
 where
-    T: Copy + num::Bounded + num::Zero,
+    T: Copy + Bounded + Zero,
 {
     fn from(value: T) -> Self {
         Self {
@@ -229,7 +229,7 @@ impl_from_wrapnum!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
 
 impl<T> Default for WrapNum<T>
 where
-    T: num::Bounded + num::Zero,
+    T: Bounded + Zero,
 {
     /// The default behavior is to set [`WrapNum::value`] and [`WrapNum::min`] to [`zero()`] and
     /// [`WrapNum::max`] to [`num::Bounded::max_value()`].
@@ -244,7 +244,7 @@ where
 
 impl<T> WrapNum<T>
 where
-    T: num::Bounded + num::Zero + PartialOrd,
+    T: Bounded + Zero + PartialOrd,
 {
     /// Create new wrapped number and automatic zeroed [`WrapNum::value`].
     pub fn new(max: T) -> Self {
